@@ -16,10 +16,29 @@ PRODUCTS = {
         "name": "Footlocker(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.footlocker.com/product/nike-air-max-95-mens/H4740001.html",
     },
+    "upthere_95": {
+        "name": "UPTHERE(AU)_AIR MAX 95 neon (men's)",
+        "url": "https://uptherestore.com/products/air-max-95-og-black-neon-yellow-cool-grey",
+        "api_url": "https://uptherestore.com/products/air-max-95-og-black-neon-yellow-cool-grey.js",
+    },
+    "champs_95": {
+        "name": "Champs(US)_AIR MAX 95 neon (men's)",
+        "url": "https://www.champssports.com/product/nike-air-max-95-mens/HM4740001.html",
+    },
     "kith": {
         "name": "KITH(CA)_New Balance Made in USA 992 - Argon",
         "url": "https://ca.kith.com/collections/mens-footwear/products/nbu992ki",
         "api_url": "https://ca.kith.com/products/nbu992ki.js",
+    },
+    "kith_usa_990v3": {
+        "name": "KITH(US)_New Balance Made in USA 990v3 - Hallow",
+        "url": "https://kith.com/products/nbu990kt3",
+        "api_url": "https://kith.com/products/nbu990kt3.js",
+    },
+    "kith_usa_992": {
+        "name": "KITH(US)_New Balance Made in USA 992 - Argon",
+        "url": "https://kith.com/products/nbu992ki",
+        "api_url": "https://kith.com/products/nbu992ki.js",
     },
 }
 
@@ -32,13 +51,30 @@ def notify(message):
     print("Discord response:", r.text)
 
 
-def check_kith():
-    data = requests.get(PRODUCTS["kith"]["api_url"], headers=HEADERS, timeout=20).json()
-    found = []
+def check_kith(product_key):
 
+    api_url = PRODUCTS[product_key]["api_url"]
+    
+    data = requests.get(
+        api_url,
+        headers=HEADERS,
+        timeout=20
+    ).json()
+
+    found = []
+    
     for v in data.get("variants", []):
-        size = v.get("title", "").replace("US ", "").strip()
-        if size in TARGET_SIZES and v.get("available"):
+
+        size = (
+            v.get("title", "")
+            .replace("US ", "")
+            .strip()
+        )
+
+        if (
+            size in TARGET_SIZES
+            and v.get("available")
+        ):
             found.append(size)
 
     return found
@@ -81,6 +117,24 @@ def check_footlocker():
     return [s for s in sizes if s in TARGET_SIZES]
 
 
+def check_champs():
+
+    url = PRODUCTS["champs_95"]["url"]
+
+    html = requests.get(
+        url,
+        headers=HEADERS,
+        timeout=20
+    ).text
+
+    sizes = re.findall(
+        r'"size":"(.*?)".*?"inventoryStatus":"Available"',
+        html,
+    )
+
+    return [s for s in sizes if s in TARGET_SIZES]
+
+
 def format_stock_block(product_key, sizes):
     product = PRODUCTS[product_key]
 
@@ -101,7 +155,11 @@ def main():
     results = {
         "nike": check_nike(),
         "footlocker": check_footlocker(),
-        "kith": check_kith(),
+        "upthere_95": check_kith("upthere_95"),
+        "champs_95": check_champs(),
+        "kith": check_kith("kith"),
+        "kith_usa_990v3": check_kith("kith_usa_990v3"),
+        "kith_usa_992": check_kith("kith_usa_992"),
     }
 
     print(results)
