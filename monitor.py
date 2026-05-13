@@ -1,7 +1,9 @@
 import requests, re, json
 
 # ===== 通知設定 =====
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1504122014040985793/wfITyGv3N6QH0dlrDaUkLQwnQjOw3hfI24CS4qnTHHjJ8eHGLPmNB7GWkv5x6o9VrxVZ"
+import os
+
+DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
 
 TARGET_SIZES = ["9.5","10","10.5","11","12","13"]
 
