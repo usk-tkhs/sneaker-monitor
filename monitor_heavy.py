@@ -3,6 +3,9 @@ import re
 import json
 import requests
 
+import hashlib
+from datetime import datetime
+
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 TARGET_SIZES = ["9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13"]
@@ -49,6 +52,70 @@ def notify(message):
     r = requests.post(WEBHOOK_URL, json={"content": message})
     print("Discord status:", r.status_code)
     print("Discord response:", r.text)
+
+
+# =========================
+# STATE FILE
+# =========================
+STATE_FILE = "stock_state.json"
+
+
+def load_state():
+
+    if not os.path.exists(STATE_FILE):
+        return {}
+
+    try:
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {}
+
+
+def save_state(state):
+
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f)
+
+
+# =========================
+# STOCK HASH
+# =========================
+def generate_stock_hash(results):
+
+    normalized = json.dumps(results, sort_keys=True)
+
+    return hashlib.md5(
+        normalized.encode()
+    ).hexdigest()
+
+
+# =========================
+# HEALTH CHECK
+# =========================
+def should_send_healthcheck(state):
+
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+
+    last_healthcheck = state.get(
+        "last_healthcheck"
+    )
+
+    return last_healthcheck != today
+
+
+def send_healthcheck(state):
+
+    notify(
+        "✅ Sneaker monitor alive\n"
+        f"UTC: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
+    state["last_healthcheck"] = (
+        datetime.utcnow().strftime("%Y-%m-%d")
+    )
+
+    save_state(state)
 
 
 def check_kith(product_key):
@@ -151,7 +218,13 @@ def format_stock_block(product_key, sizes):
     )
 
 
+# =========================
+# MAIN
+# =========================
 def main():
+
+    state = load_state()
+
     results = {
         "nike": check_nike(),
         "footlocker": check_footlocker(),
@@ -160,22 +233,60 @@ def main():
 
     print(results)
 
+    # =========================
+    # HEALTH CHECK
+    # =========================
+    if should_send_healthcheck(state):
+        send_healthcheck(state)
+
     blocks = []
 
     for key, sizes in results.items():
-        block = format_stock_block(key, sizes)
+
+        block = format_stock_block(
+            key,
+            sizes
+        )
+
         if block:
             blocks.append(block)
 
+    current_hash = generate_stock_hash(results)
+
+    previous_hash = state.get(
+        "last_stock_hash"
+    )
+
     if blocks:
-        message = (
-            "🚨 **RESTOCK DETECTED - Heavy Monitor** 🚨\n\n"
-            "対象サイズ: **US 9〜US 13**\n\n"
-            + "\n\n".join(blocks)
-        )
-        notify(message)
+
+        if current_hash != previous_hash:
+
+            message = (
+                "🚨 **RESTOCK DETECTED - Heavy Monitor** 🚨\n\n"
+                "対象サイズ: **US 9〜US 13**\n\n"
+                + "\n\n".join(blocks)
+            )
+
+            notify(message)
+
+            state[
+                "last_stock_hash"
+            ] = current_hash
+
+            save_state(state)
+
+        else:
+            print("Duplicate stock. Skip notification.")
+
     else:
+
         print("No stock found.")
+
+        state[
+            "last_stock_hash"
+        ] = ""
+
+        save_state(state)
 
 
 if __name__ == "__main__":
