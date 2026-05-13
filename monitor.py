@@ -1,50 +1,25 @@
-import requests, re, json
-
-# ===== 通知設定 =====
 import os
+import requests
+from dotenv import load_dotenv
 
-DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
+# .env 読み込み
+load_dotenv()
 
-TARGET_SIZES = ["9","9.5","10","10.5","11","12","13"]
+WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL") or os.getenv("DISCORD_WEBHOOK")
 
-def notify(msg):
-    requests.post(DISCORD_WEBHOOK, json={"content": msg})
+def notify(message: str):
+    if not WEBHOOK_URL:
+        print("Webhook URL not found")
+        return
 
-# ===== KITH =====
-def check_kith():
-    url = "https://ca.kith.com/products/nbu992ki.js"
-    data = requests.get(url).json()
-    found = []
+    data = {
+        "content": message
+    }
 
-    for v in data["variants"]:
-        size = v["title"].replace("US ","")
-        if size in TARGET_SIZES and v["available"]:
-            found.append(size)
+    res = requests.post(WEBHOOK_URL, json=data)
 
-    return found
-
-# ===== NIKE =====
-def check_nike():
-    url = "https://www.nike.com/au/t/nike-air-max-95-big-bubble-og-mens-shoes-zhFhFmlx/HM4740-001"
-    html = requests.get(url, headers={"User-Agent":"Mozilla/5.0"}).text
-    data = re.search(r'INITIAL_REDUX_STATE=(.*?);</script>', html)
-    if not data:
-        return []
-    js = json.loads(data.group(1))
-    skus = js["Threads"]["products"]["HM4740-001"]["availableSkus"]
-
-    found = []
-    for s in skus:
-        if s["nikeSize"] in TARGET_SIZES and s["availability"]["inStock"]:
-            found.append(s["nikeSize"])
-    return found
-
-# ===== FOOTLOCKER =====
-def check_footlocker():
-    url = "https://www.footlocker.com/product/nike-air-max-95-mens/H4740001.html"
-    html = requests.get(url, headers={"User-Agent":"Mozilla/5.0"}).text
-    sizes = re.findall(r'"size":"(.*?)".*?"inventoryStatus":"Available"', html)
-    return [s for s in sizes if s in TARGET_SIZES]
+    print("status:", res.status_code)
+    print("response:", res.text)
 
 # ===== MAIN =====
 def main():
