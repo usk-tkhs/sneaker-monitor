@@ -5,7 +5,7 @@ import os
 
 DISCORD_WEBHOOK = os.environ["DISCORD_WEBHOOK"]
 
-TARGET_SIZES = ["9.5","10","10.5","11","12","13"]
+TARGET_SIZES = ["9","9.5","10","10.5","11","12","13"]
 
 def notify(msg):
     requests.post(DISCORD_WEBHOOK, json={"content": msg})
@@ -48,13 +48,7 @@ def check_footlocker():
 
 # ===== MAIN =====
 def main():
-    nike = check_nike()
-    footlocker = check_footlocker()
-    kith = check_kith()
-
-    if nike or footlocker or kith:
-        msg = f"🚨 RESTOCK!\nNike:{nike}\nFootlocker:{footlocker}\nKITH:{kith}"
-        notify(msg)
+    notify("TEST SUCCESS 🎉")
 
 if __name__ == "__main__":
     main()
