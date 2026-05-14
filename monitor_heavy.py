@@ -11,13 +11,13 @@ TARGET_SIZES = ["9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13"]
 
 PRODUCTS = {
     "nike": {
-        "name": "NIKE(AU)_AIR MAX 95 neon (men's)",
+        "name": "Nike(API Signal)_AIR MAX 95 neon",
         "url": "https://www.nike.com/au/t/nike-air-max-95-big-bubble-og-mens-shoes-zhFhFmlx/HM4740-001",
         "style_color": "HM4740-001",
         "color": 16711680,
     },
     "mind001_au": {
-        "name": "Nike(AU)_Mind 001 Mule Black Hyper Crimson",
+        "name": "Nike(API Signal)_Mind 001 Mule Black Hyper Crimson",
         "url": "https://www.nike.com/au/t/nike-mind-001-mens-pregame-mules-0gWQwzQC/HQ4307-001",
         "style_color": "HQ4307-001",
         "color": 16753920,
