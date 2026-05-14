@@ -1,0 +1,32 @@
+name: Update README
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - "monitor_shopify.py"
+      - "monitor_heavy.py"
+      - "scripts/update_readme.py"
+      - ".github/workflows/*.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Generate README
+        run: python3 scripts/update_readme.py
+
+      - name: Commit README
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "auto update README"
+          file_pattern: README.md

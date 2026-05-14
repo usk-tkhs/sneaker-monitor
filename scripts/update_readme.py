@@ -1,8 +1,12 @@
-# Sneaker Restock Monitor
+from datetime import datetime, timezone, timedelta
+
+JST = timezone(timedelta(hours=9))
+
+README = f"""# Sneaker Restock Monitor
 
 Discord notification based sneaker restock monitor using GitHub Actions.
 
-Last updated: 2026-05-14 18:48:00 JST
+Last updated: {datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")}
 
 ---
 
@@ -65,3 +69,9 @@ DISCORD_WEBHOOK_URL
 ## Disclaimer
 
 Personal use only.
+"""
+
+with open("README.md", "w", encoding="utf-8") as f:
+    f.write(README)
+
+print("README.md updated")
