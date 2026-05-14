@@ -206,7 +206,7 @@ def check_nike(product_key):
 
     api_url = (
         "https://api.nike.com/product_feed/threads/v2"
-        f"?filter=styleColor({style_color})"
+        f"?filter=productInfo.merchProduct.styleColor({style_color})"
         "&filter=marketplace(AU)"
         "&filter=language(en-GB)"
         "&filter=channelId(d9a5bc42-4b9c-4976-858a-f159cf99c647)"
