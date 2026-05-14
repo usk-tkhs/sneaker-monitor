@@ -252,6 +252,38 @@ def check_nike():
 
 
 def check_footlocker():
+
+    print("Checking Footlocker...", flush=True)
+
+    url = PRODUCTS["footlocker"]["url"]
+
+    html = requests.get(
+
+        url,
+
+        headers=HEADERS,
+
+        timeout=20
+
+    ).text
+
+    print("Footlocker response received", len(html), flush=True)
+
+    sizes = re.findall(
+
+        r'"size":"([^"]+)".{0,500}?"inventoryStatus":"Available"',
+
+        html,
+
+    )
+
+    print("Footlocker parsed", sizes, flush=True)
+
+    return [s for s in sizes if s in TARGET_SIZES]
+
+
+'''
+def check_footlocker():
     html = requests.get(PRODUCTS["footlocker"]["url"], headers=HEADERS, timeout=20).text
 
     sizes = re.findall(
@@ -260,8 +292,41 @@ def check_footlocker():
     )
 
     return [s for s in sizes if s in TARGET_SIZES]
+'''
 
 
+def check_champs():
+
+    print("Checking Champs...", flush=True)
+
+    url = PRODUCTS["champs_95"]["url"]
+
+    html = requests.get(
+
+        url,
+
+        headers=HEADERS,
+
+        timeout=20
+
+    ).text
+
+    print("Champs response received", len(html), flush=True)
+
+    sizes = re.findall(
+
+        r'"size":"([^"]+)".{0,500}?"inventoryStatus":"Available"',
+
+        html,
+
+    )
+
+    print("Champs parsed", sizes, flush=True)
+
+    return [s for s in sizes if s in TARGET_SIZES]
+
+
+'''
 def check_champs():
 
     url = PRODUCTS["champs_95"]["url"]
@@ -273,11 +338,12 @@ def check_champs():
     ).text
 
     sizes = re.findall(
-        r'"size":"(.*?)".*?"inventoryStatus":"Available"',
+        r'"size":"([^"]+)".{0,500}?"inventoryStatus":"Available"',
         html,
     )
 
     return [s for s in sizes if s in TARGET_SIZES]
+'''
 
 
 # =========================
