@@ -3,7 +3,6 @@ import re
 import json
 import requests
 
-import hashlib
 from datetime import datetime
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
@@ -48,8 +47,94 @@ PRODUCTS = {
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 
-def notify(message):
-    r = requests.post(WEBHOOK_URL, json={"content": message})
+# =========================
+# HEALTH CHECK
+# =========================
+def should_send_healthcheck(state):
+
+    today = datetime.utcnow().strftime(
+        "%Y-%m-%d"
+    )
+
+    return (
+        state.get("last_healthcheck")
+        != today
+    )
+
+
+def send_healthcheck(state):
+
+    payload = {
+        "embeds": [
+            {
+                "title": "✅ Sneaker monitor alive",
+                "color": 65280,
+                "fields": [
+                    {
+                        "name": "UTC",
+                        "value": datetime.utcnow().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        "inline": False,
+                    }
+                ],
+            }
+        ]
+    }
+
+    requests.post(
+        WEBHOOK_URL,
+        json=payload
+    )
+
+    state["last_healthcheck"] = (
+        datetime.utcnow().strftime(
+            "%Y-%m-%d"
+        )
+    )
+
+    save_state(state)
+
+
+# =========================
+# STORE STATE MANAGEMENT
+# =========================
+def get_new_sizes(product_key, current_sizes, state):
+
+    previous_sizes = state.get(
+        product_key,
+        []
+    )
+
+    new_sizes = []
+
+    for size in current_sizes:
+
+        if size not in previous_sizes:
+            new_sizes.append(size)
+
+    return new_sizes
+
+
+def update_store_state(product_key, sizes, state):
+
+    state[product_key] = sizes
+
+
+# =========================
+# DISCORD EMBED
+# =========================
+def notify_embeds(embeds):
+
+    payload = {
+        "embeds": embeds
+    }
+
+    r = requests.post(
+        WEBHOOK_URL,
+        json=payload
+    )
+
     print("Discord status:", r.status_code)
     print("Discord response:", r.text)
 
@@ -76,18 +161,6 @@ def save_state(state):
 
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
-
-
-# =========================
-# STOCK HASH
-# =========================
-def generate_stock_hash(results):
-
-    normalized = json.dumps(results, sort_keys=True)
-
-    return hashlib.md5(
-        normalized.encode()
-    ).hexdigest()
 
 
 # =========================
@@ -202,20 +275,38 @@ def check_champs():
     return [s for s in sizes if s in TARGET_SIZES]
 
 
-def format_stock_block(product_key, sizes):
+# =========================
+# DISCORD EMBED FORMAT
+# =========================
+def create_embed(product_key, sizes):
+
     product = PRODUCTS[product_key]
 
-    if not sizes:
-        return None
-
-    size_text = ", ".join(f"US {s}" for s in sizes)
-
-    return (
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"👟 **{product['name']}**\n"
-        f"📏 Size: **{size_text}**\n"
-        f"🔗 {product['url']}"
+    size_text = " / ".join(
+        f"US {s}" for s in sizes
     )
+
+    return {
+        "title": "🚨 RESTOCK DETECTED",
+        "color": 16711680,
+        "fields": [
+            {
+                "name": "Store / Product",
+                "value": product["name"],
+                "inline": False,
+            },
+            {
+                "name": "Sizes",
+                "value": size_text,
+                "inline": False,
+            },
+            {
+                "name": "URL",
+                "value": product["url"],
+                "inline": False,
+            },
+        ],
+    }
 
 
 # =========================
@@ -233,60 +324,40 @@ def main():
 
     print(results)
 
-    # =========================
-    # HEALTH CHECK
-    # =========================
     if should_send_healthcheck(state):
         send_healthcheck(state)
 
-    blocks = []
+    embeds = []
 
-    for key, sizes in results.items():
+    for product_key, current_sizes in results.items():
 
-        block = format_stock_block(
-            key,
-            sizes
+        new_sizes = get_new_sizes(
+            product_key,
+            current_sizes,
+            state,
         )
 
-        if block:
-            blocks.append(block)
+        if new_sizes:
 
-    current_hash = generate_stock_hash(results)
-
-    previous_hash = state.get(
-        "last_stock_hash"
-    )
-
-    if blocks:
-
-        if current_hash != previous_hash:
-
-            message = (
-                "🚨 **RESTOCK DETECTED - Heavy Monitor** 🚨\n\n"
-                "対象サイズ: **US 9〜US 13**\n\n"
-                + "\n\n".join(blocks)
+            embed = create_embed(
+                product_key,
+                new_sizes,
             )
 
-            notify(message)
+            embeds.append(embed)
 
-            state[
-                "last_stock_hash"
-            ] = current_hash
+        update_store_state(
+            product_key,
+            current_sizes,
+            state,
+        )
 
-            save_state(state)
+    save_state(state)
 
-        else:
-            print("Duplicate stock. Skip notification.")
-
+    if embeds:
+        notify_embeds(embeds)
     else:
-
-        print("No stock found.")
-
-        state[
-            "last_stock_hash"
-        ] = ""
-
-        save_state(state)
+        print("No new stock.")
 
 
 if __name__ == "__main__":
