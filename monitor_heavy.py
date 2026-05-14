@@ -16,6 +16,12 @@ PRODUCTS = {
         "style_color": "HM4740-001",
         "color": 16711680,
     },
+    "mind001_au": {
+        "name": "Nike(AU)_Mind 001 Mule Black Hyper Crimson",
+        "url": "https://www.nike.com/au/t/nike-mind-001-mens-pregame-mules-0gWQwzQC/HQ4307-001",
+        "style_color": "HQ4307-001",
+        "color": 16753920,
+    },
     "footlocker": {
         "name": "Footlocker(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.footlocker.com/product/nike-air-max-95-mens/H4740001.html",
@@ -49,12 +55,6 @@ PRODUCTS = {
         "url": "https://kith.com/products/nbu992ki",
         "api_url": "https://kith.com/products/nbu992ki.js",
         "color": 10181046,
-    },
-    "mind001_au": {
-        "name": "Nike(AU)_Mind 001 Mule Black Hyper Crimson",
-        "url": "https://www.nike.com/au/t/nike-mind-001-mens-pregame-mules-0gWQwzQC/HQ4307-001",
-        "style_color": "HQ4307-001",
-        "color": 16753920,
     },
 }
 
@@ -202,38 +202,56 @@ def check_nike(product_key):
     product = PRODUCTS[product_key]
     style_color = product["style_color"]
 
-    html = requests.get(
-        product["url"],
-        headers=HEADERS,
-        timeout=20,
-    ).text
+    print(f"Checking {product_key} via Nike API...", flush=True)
 
-    match = re.search(
-        r'INITIAL_REDUX_STATE=(.*?);',
-        html
+    api_url = (
+        "https://api.nike.com/product_feed/threads/v2"
+        f"?filter=styleColor({style_color})"
+        "&filter=marketplace(AU)"
+        "&filter=language(en-GB)"
+        "&filter=channelId(d9a5bc42-4b9c-4976-858a-f159cf99c647)"
     )
-    if not match:
-        print(html[:3000])
-        print(f"{product_key}: INITIAL_REDUX_STATE not found")
-        return []
 
     try:
-        js = json.loads(match.group(1))
-        skus = js["Threads"]["products"][style_color]["availableSkus"]
+        data = requests.get(
+            api_url,
+            headers=HEADERS,
+            timeout=20
+        ).json()
+
+        objects = data.get("objects", [])
+        if not objects:
+            print(f"{product_key}: no objects found")
+            return []
+
+        product_info = objects[0]["productInfo"][0]
+
+        skus = product_info.get("skus", [])
+        available_skus = product_info.get("availableSkus", [])
+
+        size_map = {
+            sku["id"]: str(sku.get("nikeSize", "")).strip()
+            for sku in skus
+        }
+
+        found = []
+
+        for item in available_skus:
+            sku_id = item.get("skuId")
+            available = item.get("available", False)
+
+            size = size_map.get(sku_id)
+
+            if available and size in TARGET_SIZES:
+                found.append(size)
+
+        print(f"{product_key} result: {found}", flush=True)
+
+        return found
+
     except Exception as e:
-        print(f"{product_key} parse error:", e)
+        print(f"{product_key} Nike API error:", e)
         return []
-
-    found = []
-
-    for s in skus:
-        size = str(s.get("nikeSize", "")).strip()
-        in_stock = s.get("availability", {}).get("inStock", False)
-
-        if size in TARGET_SIZES and in_stock:
-            found.append(size)
-
-    return found
 
 
 def check_footlocker():
@@ -267,19 +285,6 @@ def check_footlocker():
     return [s for s in sizes if s in TARGET_SIZES]
 
 
-'''
-def check_footlocker():
-    html = requests.get(PRODUCTS["footlocker"]["url"], headers=HEADERS, timeout=20).text
-
-    sizes = re.findall(
-        r'"size":"(.*?)".*?"inventoryStatus":"Available"',
-        html,
-    )
-
-    return [s for s in sizes if s in TARGET_SIZES]
-'''
-
-
 def check_champs():
 
     print("Checking Champs...", flush=True)
@@ -309,26 +314,6 @@ def check_champs():
     print("Champs parsed", sizes, flush=True)
 
     return [s for s in sizes if s in TARGET_SIZES]
-
-
-'''
-def check_champs():
-
-    url = PRODUCTS["champs_95"]["url"]
-
-    html = requests.get(
-        url,
-        headers=HEADERS,
-        timeout=20
-    ).text
-
-    sizes = re.findall(
-        r'"size":"([^"]+)".{0,500}?"inventoryStatus":"Available"',
-        html,
-    )
-
-    return [s for s in sizes if s in TARGET_SIZES]
-'''
 
 
 # =========================
