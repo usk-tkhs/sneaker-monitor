@@ -13,6 +13,7 @@ PRODUCTS = {
     "nike": {
         "name": "NIKE(AU)_AIR MAX 95 neon (men's)",
         "url": "https://www.nike.com/au/t/nike-air-max-95-big-bubble-og-mens-shoes-zhFhFmlx/HM4740-001",
+        "style_color": "HM4740-001",
         "color": 16711680,
     },
     "footlocker": {
@@ -48,6 +49,11 @@ PRODUCTS = {
         "url": "https://kith.com/products/nbu992ki",
         "api_url": "https://kith.com/products/nbu992ki.js",
         "color": 10181046,
+    },
+    "mind001_au": {
+        "name": "Nike(AU)_Mind 001 Mule Black Hyper Crimson",
+        "url": "https://www.nike.com/au/t/nike-mind-001-mens-pregame-mules-0gWQwzQC/HQ4307-001",
+        "color": 16753920,
     },
 }
 
@@ -191,18 +197,26 @@ def check_kith(product_key):
     return found
 
 
-def check_nike():
-    html = requests.get(PRODUCTS["nike"]["url"], headers=HEADERS, timeout=20).text
+def check_nike(product_key):
+    product = PRODUCTS[product_key]
+    style_color = product["style_color"]
+
+    html = requests.get(
+        product["url"],
+        headers=HEADERS,
+        timeout=20,
+    ).text
 
     match = re.search(r"INITIAL_REDUX_STATE=(.*?);</script>", html)
     if not match:
+        print(f"{product_key}: INITIAL_REDUX_STATE not found")
         return []
 
     try:
         js = json.loads(match.group(1))
-        skus = js["Threads"]["products"]["HM4740-001"]["availableSkus"]
+        skus = js["Threads"]["products"][style_color]["availableSkus"]
     except Exception as e:
-        print("Nike parse error:", e)
+        print(f"{product_key} parse error:", e)
         return []
 
     found = []
@@ -377,10 +391,23 @@ def main():
     state = load_state()
 
     results = {
-        "nike": safe_check("nike", check_nike),
-        "footlocker": safe_check("footlocker", check_footlocker),
-        "champs_95": safe_check("champs", check_champs),
-    }
+        "nike": safe_check(
+            "nike",
+            lambda: check_nike("nike")
+        ),
+        "mind001_au": safe_check(
+            "mind001_au",
+            lambda: check_nike("mind001_au")
+        ),
+        "footlocker": safe_check(
+            "footlocker",
+            check_footlocker
+        ),
+        "champs_95": safe_check(
+            "champs",
+            check_champs
+        ),
+}
 
     print(results)
 
