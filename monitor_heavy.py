@@ -205,11 +205,10 @@ def check_nike(product_key):
     print(f"Checking {product_key} via Nike API...", flush=True)
 
     api_url = (
-        "https://api.nike.com/product_feed/threads/v2"
-        f"?filter=styleColor({style_color})"
-        "&filter=marketplace(AU)"
-        "&filter=language(en-GB)"
-        "&filter=channelId(d9a5bc42-4b9c-4976-858a-f159cf99c647)"
+    "https://api.nike.com/product_feed/threads/v2"
+    f"?filter=styleColor({style_color})"
+    "&filter=marketplace(AU)"
+    "&filter=language(en)"
     )
 
     try:
@@ -222,6 +221,8 @@ def check_nike(product_key):
         objects = data.get("objects", [])
         if not objects:
             print(f"{product_key}: no objects found")
+            print("Nike API URL:", api_url)
+            print("Nike API response:", data)
             return []
 
         product_info = objects[0]["productInfo"][0]
