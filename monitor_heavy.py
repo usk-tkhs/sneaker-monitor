@@ -380,6 +380,25 @@ def create_embed(product_key, sizes):
     }
 
 
+def safe_check(name, func):
+
+    try:
+
+        print(f"Checking {name}...", flush=True)
+
+        result = func()
+
+        print(f"{name} result: {result}", flush=True)
+
+        return result
+
+    except Exception as e:
+
+        print(f"{name} error: {e}", flush=True)
+
+        return []
+
+
 # =========================
 # MAIN
 # =========================
@@ -388,9 +407,9 @@ def main():
     state = load_state()
 
     results = {
-        "nike": check_nike(),
-        "footlocker": check_footlocker(),
-        "champs_95": check_champs(),
+        "nike": safe_check("nike", check_nike),
+        "footlocker": safe_check("footlocker", check_footlocker),
+        "champs_95": safe_check("champs", check_champs),
     }
 
     print(results)
