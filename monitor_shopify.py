@@ -3,7 +3,7 @@ import re
 import json
 import requests
 
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
@@ -13,87 +13,45 @@ PRODUCTS = {
     "nike": {
         "name": "NIKE(AU)_AIR MAX 95 neon (men's)",
         "url": "https://www.nike.com/au/t/nike-air-max-95-big-bubble-og-mens-shoes-zhFhFmlx/HM4740-001",
+        "color": 16711680,
     },
     "footlocker": {
         "name": "Footlocker(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.footlocker.com/product/nike-air-max-95-mens/H4740001.html",
+        "color": 16753920,
     },
     "upthere_95": {
         "name": "UPTHERE(AU)_AIR MAX 95 neon (men's)",
         "url": "https://uptherestore.com/products/air-max-95-og-black-neon-yellow-cool-grey",
         "api_url": "https://uptherestore.com/products/air-max-95-og-black-neon-yellow-cool-grey.js",
+        "color": 16776960,
     },
     "champs_95": {
         "name": "Champs(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.champssports.com/product/nike-air-max-95-mens/HM4740001.html",
+        "color": 3447003,
     },
     "kith": {
         "name": "KITH(CA)_New Balance Made in USA 992 - Argon",
         "url": "https://ca.kith.com/collections/mens-footwear/products/nbu992ki",
         "api_url": "https://ca.kith.com/products/nbu992ki.js",
+        "color": 10181046,
     },
     "kith_usa_990v3": {
         "name": "KITH(US)_New Balance Made in USA 990v3 - Hallow",
         "url": "https://kith.com/products/nbu990kt3",
         "api_url": "https://kith.com/products/nbu990kt3.js",
+        "color": 10181046,
     },
     "kith_usa_992": {
         "name": "KITH(US)_New Balance Made in USA 992 - Argon",
         "url": "https://kith.com/products/nbu992ki",
         "api_url": "https://kith.com/products/nbu992ki.js",
+        "color": 10181046,
     },
 }
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
-
-
-# =========================
-# HEALTH CHECK
-# =========================
-def should_send_healthcheck(state):
-
-    today = datetime.utcnow().strftime(
-        "%Y-%m-%d"
-    )
-
-    return (
-        state.get("last_healthcheck")
-        != today
-    )
-
-
-def send_healthcheck(state):
-
-    payload = {
-        "embeds": [
-            {
-                "title": "✅ Sneaker monitor alive",
-                "color": 65280,
-                "fields": [
-                    {
-                        "name": "UTC",
-                        "value": datetime.utcnow().strftime(
-                            "%Y-%m-%d %H:%M:%S"
-                        ),
-                        "inline": False,
-                    }
-                ],
-            }
-        ]
-    }
-
-    requests.post(
-        WEBHOOK_URL,
-        json=payload
-    )
-
-    state["last_healthcheck"] = (
-        datetime.utcnow().strftime(
-            "%Y-%m-%d"
-        )
-    )
-
-    save_state(state)
 
 
 # =========================
@@ -144,6 +102,12 @@ def notify_embeds(embeds):
 # =========================
 STATE_FILE = "stock_state.json"
 
+JST = timezone(timedelta(hours=9))
+
+
+def get_jst_now():
+    return datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
+
 
 def load_state():
 
@@ -168,7 +132,9 @@ def save_state(state):
 # =========================
 def should_send_healthcheck(state):
 
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime(
+        "%Y-%m-%d"
+    )
 
     last_healthcheck = state.get(
         "last_healthcheck"
@@ -183,16 +149,15 @@ def send_healthcheck(state):
         "color": 65280,
         "fields": [
             {
-                "name": "UTC",
-                "value": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                "name": "Checked at",
+                "value": get_jst_now(),
                 "inline": False,
             }
         ],
     }
-
     notify_embeds([embed])
 
-    state["last_healthcheck"] = datetime.utcnow().strftime("%Y-%m-%d")
+    state["last_healthcheck"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     save_state(state)
 
 
@@ -284,7 +249,6 @@ def check_champs():
 # DISCORD EMBED FORMAT
 # =========================
 def create_embed(product_key, sizes):
-
     product = PRODUCTS[product_key]
 
     size_text = " / ".join(
@@ -293,7 +257,7 @@ def create_embed(product_key, sizes):
 
     return {
         "title": "🚨 RESTOCK DETECTED",
-        "color": 16711680,
+        "color": product.get("color", 16711680),
         "fields": [
             {
                 "name": "Store / Product",
@@ -303,6 +267,11 @@ def create_embed(product_key, sizes):
             {
                 "name": "Sizes",
                 "value": size_text,
+                "inline": False,
+            },
+            {
+                "name": "Checked at",
+                "value": get_jst_now(),
                 "inline": False,
             },
             {
