@@ -49,6 +49,36 @@ PRODUCTS = {
         "api_url": "https://kith.com/products/nbu992ki.js",
         "color": 10181046,
     },
+    "livestock_95": {
+        "name": "Livestock(CA)_AIR MAX 95 neon (men's)",
+        "url": "https://deadstock.ca/products/nike-air-max-95-og-black-neon-yellow-cool-grey",
+        "api_url": "https://deadstock.ca/products/nike-air-max-95-og-black-neon-yellow-cool-grey.js",
+        "color": 3447003,
+    },
+    "sneakerbox_95": {
+        "name": "Sneakerbox(CA)_AIR MAX 95 neon (men's)",
+        "url": "https://sneakerboxshop.ca/products/nike-air-max-95-og-big-bubble-hm4740-001-neon-yellow",
+        "api_url": "https://sneakerboxshop.ca/products/nike-air-max-95-og-big-bubble-hm4740-001-neon-yellow.js",
+        "color": 10181046,
+    },
+    "undefeated_95": {
+        "name": "UNDEFEATED(US)_AIR MAX 95 neon (men's)",
+        "url": "https://undefeated.com/products/nike-air-max-95-og-black-neonyellow",
+        "api_url": "https://undefeated.com/products/nike-air-max-95-og-black-neonyellow.js",
+        "color": 16711680,
+    },
+    "supply_95": {
+        "name": "Supply(AU)_AIR MAX 95 neon (men's)",
+        "url": "https://supplystore.com.au/products/nike-air-max-95-og-black-neon-yellow",
+        "api_url": "https://supplystore.com.au/products/nike-air-max-95-og-black-neon-yellow.js",
+        "color": 16753920,
+    },
+    "loaded_95": {
+        "name": "LOADED(NZ)_AIR MAX 95 neon (men's)",
+        "url": "https://loadednz.com/products/air-max-95-big-bubble-neon-1",
+        "api_url": "https://loadednz.com/products/air-max-95-big-bubble-neon-1.js",
+        "color": 65280,
+    },
 }
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -295,6 +325,11 @@ def main():
         "kith_usa_990v3": check_kith("kith_usa_990v3"),
         "kith_usa_992": check_kith("kith_usa_992"),
         "upthere_95": check_kith("upthere_95"),
+        "livestock_95": check_kith("livestock_95"),
+        "sneakerbox_95": check_kith("sneakerbox_95"),
+        "undefeated_95": check_kith("undefeated_95"),
+        "supply_95": check_kith("supply_95"),
+        "loaded_95": check_kith("loaded_95"),
     }
 
     print(results)
