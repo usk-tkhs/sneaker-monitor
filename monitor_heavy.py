@@ -178,16 +178,21 @@ def should_send_healthcheck(state):
 
 
 def send_healthcheck(state):
+    embed = {
+        "title": "✅ Heavy Monitor alive",
+        "color": 65280,
+        "fields": [
+            {
+                "name": "UTC",
+                "value": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                "inline": False,
+            }
+        ],
+    }
 
-    notify(
-        "✅ Sneaker monitor alive\n"
-        f"UTC: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
-    )
+    notify_embeds([embed])
 
-    state["last_healthcheck"] = (
-        datetime.utcnow().strftime("%Y-%m-%d")
-    )
-
+    state["last_healthcheck"] = datetime.utcnow().strftime("%Y-%m-%d")
     save_state(state)
 
 
