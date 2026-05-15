@@ -27,6 +27,12 @@ PRODUCTS = {
         "style_color": "HQ4307-001",
         "color": 16753920,
     },
+    "nike_jp_mind001": {
+        "name": "Nike(JP)_Mind 001",
+        "url": "https://www.nike.com/jp/en/t/mind-001-mens-pregame-mules-mb0qP1Pc",
+        "style_color": "HQ4307-001",
+        "color": 16711680,
+    },
     "footlocker": {
         "name": "Footlocker(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.footlocker.com/product/nike-air-max-95-mens/H4740001.html",
@@ -36,6 +42,31 @@ PRODUCTS = {
         "name": "Champs(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.champssports.com/product/nike-air-max-95-mens/HM4740001.html",
         "color": 16776960,
+    },
+    "sws_mind001": {
+        "name": "SWS(JP)_Nike Mind 001 Black Hyper Crimson",
+        "url": "https://www.sports-ws.com/commodity/SKOB1347D/NI1757BU079698/",
+        "color": 16753920,
+    },
+    "kishispo_mind001": {
+        "name": "KISHISPO(JP)_Nike Mind 001",
+        "url": "https://www.kishispo.net/products/list?category_id=20079&cond=t5",
+        "color": 3447003,
+    },
+    "atmos_mind001": {
+        "name": "ATMOS(JP)_Nike Mind 001",
+        "url": "https://www.atmos-tokyo.com/search?q=HQ4307-001",
+        "color": 10181046,
+    },
+    "uniontokyo_mind001": {
+        "name": "UNION TOKYO(JP)_Nike Mind 001",
+        "url": "https://www.uniontokyo.jp/search?q=HQ4307-001",
+        "color": 15105570,
+    },
+    "uptown_mind001": {
+        "name": "Uptown Deluxe(JP)_Nike Mind 001",
+        "url": "https://uptowndeluxe.co.jp/?pid=191728360",
+        "color": 65280,
     },
 }
 
@@ -173,6 +204,61 @@ def check_champs() -> list[str]:
     return [s for s in sizes if s in TARGET_SIZES]
 
 
+JP_TARGET_KEYWORDS = [
+    "HQ4307-001",
+    "hq4307-001",
+    "HQ4307 001",
+    "hq4307 001",
+    "マインド 001",
+    "Mind 001",
+    "MIND 001",
+]
+
+JP_SOLDOUT_KEYWORDS = [
+    "SOLD OUT",
+    "Sold Out",
+    "sold out",
+    "売り切れ",
+    "品切れ",
+    "在庫なし",
+    "ただいま品切れ中",
+    "完売",
+    "抽選販売",
+    "抽選受付",
+]
+
+
+def check_jp_page_signal(product_key):
+    product = PRODUCTS[product_key]
+
+    print(f"Checking {product_key}...", flush=True)
+
+    html = requests.get(
+        product["url"],
+        headers=HEADERS,
+        timeout=20,
+    ).text
+
+    print(
+        f"{product_key} response received",
+        len(html),
+        flush=True,
+    )
+
+    has_target = any(keyword in html for keyword in JP_TARGET_KEYWORDS)
+    has_soldout = any(keyword in html for keyword in JP_SOLDOUT_KEYWORDS)
+
+    print(
+        f"{product_key} has_target={has_target}, has_soldout={has_soldout}",
+        flush=True,
+    )
+
+    if has_target and not has_soldout:
+        return ["SIGNAL"]
+
+    return []
+
+
 def create_embed(product_key: str, sizes: list[str]) -> dict:
     product = PRODUCTS[product_key]
     size_text = " / ".join(f"US {s}" for s in sizes)
@@ -220,10 +306,46 @@ def main() -> None:
     state = load_state()
 
     results = {
-        "nike": safe_check("nike", lambda: check_nike("nike")),
-        "mind001_au": safe_check("mind001_au", lambda: check_nike("mind001_au")),
-        "footlocker": safe_check("footlocker", check_footlocker),
-        "champs_95": safe_check("champs_95", check_champs),
+        "nike": safe_check(
+            "nike",
+            lambda: check_nike("nike")
+        ),
+        "mind001_au": safe_check(
+            "mind001_au",
+            lambda: check_nike("mind001_au")
+        ),
+        "nike_jp_mind001": safe_check(
+            "nike_jp_mind001",
+            lambda: check_nike("nike_jp_mind001")
+        ),
+        "footlocker": safe_check(
+            "footlocker",
+            check_footlocker
+        ),
+        "champs_95": safe_check(
+            "champs_95",
+            check_champs
+        ),
+        "sws_mind001": safe_check(
+            "sws_mind001",
+            lambda: check_jp_page_signal("sws_mind001")
+        ),
+        "kishispo_mind001": safe_check(
+            "kishispo_mind001",
+            lambda: check_jp_page_signal("kishispo_mind001")
+        ),
+        "atmos_mind001": safe_check(
+            "atmos_mind001",
+            lambda: check_jp_page_signal("atmos_mind001")
+        ),
+        "uniontokyo_mind001": safe_check(
+            "uniontokyo_mind001",
+            lambda: check_jp_page_signal("uniontokyo_mind001")
+        ),
+        "uptown_mind001": safe_check(
+            "uptown_mind001",
+            lambda: check_jp_page_signal("uptown_mind001")
+        ),
     }
 
     print(results, flush=True)
