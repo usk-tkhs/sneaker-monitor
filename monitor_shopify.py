@@ -129,7 +129,7 @@ PRODUCTS = {
         "url": "https://supplystore.com.au/products/nike-air-max-95-og-black-neon-yellow",
         "api_url": "https://supplystore.com.au/products/nike-air-max-95-og-black-neon-yellow.js",
         "target_sizes": [
-            "10",
+            "9",
             "10.5",
             "11",
             "11.5",
