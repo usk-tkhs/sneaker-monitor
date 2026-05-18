@@ -213,11 +213,61 @@ def check_nike(product_key: str) -> list[str]:
     found = []
     for item in available_skus:
         size = size_map.get(item.get("skuId"))
-        target_sizes = product["target_sizes"]
         if item.get("available", False) and size in target_sizes:
             found.append(size)
 
     return found
+
+
+def filter_nike_cartable_sizes(product_key, candidate_sizes):
+    product = PRODUCTS[product_key]
+
+    html = requests.get(
+        product["url"],
+        headers=HEADERS,
+        timeout=20,
+    ).text
+
+    cartable_sizes = []
+
+    for size in candidate_sizes:
+        patterns = [
+            f'"nikeSize":"{size}"',
+            f'"label":"US {size}"',
+            f'US {size}',
+        ]
+
+        has_size = any(pattern in html for pattern in patterns)
+
+        soldout_near_size = re.search(
+            rf'(US {re.escape(size)}|nikeSize":"{re.escape(size)}").{{0,800}}?(soldOut|Sold Out|outOfStock|unavailable|disabled)',
+            html,
+            re.IGNORECASE,
+        )
+
+        if has_size and not soldout_near_size:
+            cartable_sizes.append(size)
+
+    return cartable_sizes
+
+
+def check_nike_cartable(product_key):
+    candidate_sizes = check_nike(product_key)
+
+    if not candidate_sizes:
+        return []
+
+    cartable_sizes = filter_nike_cartable_sizes(
+        product_key,
+        candidate_sizes,
+    )
+
+    print(
+        f"{product_key} cartable result: {cartable_sizes}",
+        flush=True,
+    )
+
+    return cartable_sizes
 
 
 def check_footlocker() -> list[str]:
@@ -356,7 +406,7 @@ def main() -> None:
     results = {
         "nike": safe_check(
             "nike",
-            lambda: check_nike("nike")
+            lambda: check_nike_cartable("nike")
         ),
         "footlocker": safe_check(
             "footlocker",
