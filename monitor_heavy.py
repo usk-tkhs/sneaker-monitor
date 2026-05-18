@@ -7,7 +7,6 @@ import requests
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
-TARGET_SIZES = ["9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13"]
 STATE_FILE = "stock_state.json"
 
 JST = timezone(timedelta(hours=9))
@@ -19,53 +18,98 @@ PRODUCTS = {
         "name": "Nike(API Signal)_AIR MAX 95 neon",
         "url": "https://www.nike.com/au/t/nike-air-max-95-big-bubble-og-mens-shoes-zhFhFmlx/HM4740-001",
         "style_color": "HM4740-001",
-        "color": 16711680,
-    },
-    "mind001_au": {
-        "name": "Nike(API Signal)_Mind 001 Mule Black Hyper Crimson",
-        "url": "https://www.nike.com/au/t/nike-mind-001-mens-pregame-mules-0gWQwzQC/HQ4307-001",
-        "style_color": "HQ4307-001",
-        "color": 16753920,
-    },
-    "nike_jp_mind001": {
-        "name": "Nike(JP)_Mind 001",
-        "url": "https://www.nike.com/jp/en/t/mind-001-mens-pregame-mules-mb0qP1Pc",
-        "style_color": "HQ4307-001",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 16711680,
     },
     "footlocker": {
         "name": "Footlocker(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.footlocker.com/product/nike-air-max-95-mens/H4740001.html",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 16753920,
     },
     "champs_95": {
         "name": "Champs(US)_AIR MAX 95 neon (men's)",
         "url": "https://www.champssports.com/product/nike-air-max-95-mens/HM4740001.html",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 16776960,
     },
     "sws_mind001": {
         "name": "SWS(JP)_Nike Mind 001 Black Hyper Crimson",
         "url": "https://www.sports-ws.com/commodity/SKOB1347D/NI1757BU079698/",
+        "target_sizes": [
+            "10",
+            "11",
+            "12",
+            "13",
+        ],
         "color": 16753920,
     },
     "kishispo_mind001": {
         "name": "KISHISPO(JP)_Nike Mind 001",
         "url": "https://www.kishispo.net/products/list?category_id=20079&cond=t5",
+        "target_sizes": [
+            "10",
+            "11",
+            "12",
+            "13",
+        ],
         "color": 3447003,
     },
     "atmos_mind001": {
         "name": "ATMOS(JP)_Nike Mind 001",
         "url": "https://www.atmos-tokyo.com/search?q=HQ4307-001",
+        "target_sizes": [
+            "10",
+            "11",
+            "12",
+            "13",
+        ],
         "color": 10181046,
     },
     "uniontokyo_mind001": {
         "name": "UNION TOKYO(JP)_Nike Mind 001",
         "url": "https://www.uniontokyo.jp/search?q=HQ4307-001",
+        "target_sizes": [
+            "10",
+            "11",
+            "12",
+            "13",
+        ],
         "color": 15105570,
     },
     "uptown_mind001": {
         "name": "Uptown Deluxe(JP)_Nike Mind 001",
         "url": "https://uptowndeluxe.co.jp/?pid=191728360",
+        "target_sizes": [
+            "10",
+            "11",
+            "12",
+            "13",
+        ],
         "color": 65280,
     },
 }
@@ -139,6 +183,7 @@ def send_healthcheck(state: dict) -> None:
 
 def check_nike(product_key: str) -> list[str]:
     product = PRODUCTS[product_key]
+    target_sizes = product["target_sizes"]
     style_color = product["style_color"]
 
     api_url = (
@@ -168,7 +213,8 @@ def check_nike(product_key: str) -> list[str]:
     found = []
     for item in available_skus:
         size = size_map.get(item.get("skuId"))
-        if item.get("available", False) and size in TARGET_SIZES:
+        target_sizes = product["target_sizes"]
+        if item.get("available", False) and size in target_sizes:
             found.append(size)
 
     return found
@@ -186,7 +232,8 @@ def check_footlocker() -> list[str]:
         html,
     )
 
-    return [s for s in sizes if s in TARGET_SIZES]
+    target_sizes = PRODUCTS["footlocker"]["target_sizes"]
+    return [s for s in sizes if s in target_sizes]
 
 
 def check_champs() -> list[str]:
@@ -201,7 +248,8 @@ def check_champs() -> list[str]:
         html,
     )
 
-    return [s for s in sizes if s in TARGET_SIZES]
+    target_sizes = PRODUCTS["champs_95"]["target_sizes"]
+    return [s for s in sizes if s in target_sizes]
 
 
 JP_TARGET_KEYWORDS = [
@@ -309,14 +357,6 @@ def main() -> None:
         "nike": safe_check(
             "nike",
             lambda: check_nike("nike")
-        ),
-        "mind001_au": safe_check(
-            "mind001_au",
-            lambda: check_nike("mind001_au")
-        ),
-        "nike_jp_mind001": safe_check(
-            "nike_jp_mind001",
-            lambda: check_nike("nike_jp_mind001")
         ),
         "footlocker": safe_check(
             "footlocker",

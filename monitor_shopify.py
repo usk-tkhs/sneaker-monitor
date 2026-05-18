@@ -6,7 +6,6 @@ import requests
 
 WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
-TARGET_SIZES = ["9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13"]
 STATE_FILE = "stock_state.json"
 
 JST = timezone(timedelta(hours=9))
@@ -18,54 +17,141 @@ PRODUCTS = {
         "name": "UPTHERE(AU)_AIR MAX 95 neon (men's)",
         "url": "https://uptherestore.com/products/air-max-95-og-black-neon-yellow-cool-grey",
         "api_url": "https://uptherestore.com/products/air-max-95-og-black-neon-yellow-cool-grey.js",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 16776960,
     },
     "kith": {
         "name": "KITH(CA)_New Balance Made in USA 992 - Argon",
         "url": "https://ca.kith.com/collections/mens-footwear/products/nbu992ki",
         "api_url": "https://ca.kith.com/products/nbu992ki.js",
+        "target_sizes": [
+            "9",
+            "9.5",
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 10181046,
     },
     "kith_usa_990v3": {
         "name": "KITH(US)_New Balance Made in USA 990v3 - Hallow",
         "url": "https://kith.com/products/nbu990kt3",
         "api_url": "https://kith.com/products/nbu990kt3.js",
+        "target_sizes": [
+            "9",
+            "9.5",
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 10181046,
     },
     "kith_usa_992": {
         "name": "KITH(US)_New Balance Made in USA 992 - Argon",
         "url": "https://kith.com/products/nbu992ki",
         "api_url": "https://kith.com/products/nbu992ki.js",
+        "target_sizes": [
+            "9",
+            "9.5",
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 10181046,
     },
     "livestock_95": {
         "name": "Livestock(CA)_AIR MAX 95 neon (men's)",
         "url": "https://deadstock.ca/products/nike-air-max-95-og-black-neon-yellow-cool-grey",
         "api_url": "https://deadstock.ca/products/nike-air-max-95-og-black-neon-yellow-cool-grey.js",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 3447003,
     },
     "sneakerbox_95": {
         "name": "Sneakerbox(CA)_AIR MAX 95 neon (men's)",
         "url": "https://sneakerboxshop.ca/products/nike-air-max-95-og-big-bubble-hm4740-001-neon-yellow",
         "api_url": "https://sneakerboxshop.ca/products/nike-air-max-95-og-big-bubble-hm4740-001-neon-yellow.js",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 10181046,
     },
     "undefeated_95": {
         "name": "UNDEFEATED(US)_AIR MAX 95 neon (men's)",
         "url": "https://undefeated.com/products/nike-air-max-95-og-black-neonyellow",
         "api_url": "https://undefeated.com/products/nike-air-max-95-og-black-neonyellow.js",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 16711680,
     },
     "supply_95": {
         "name": "Supply(AU)_AIR MAX 95 neon (men's)",
         "url": "https://supplystore.com.au/products/nike-air-max-95-og-black-neon-yellow",
         "api_url": "https://supplystore.com.au/products/nike-air-max-95-og-black-neon-yellow.js",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 16753920,
     },
     "loaded_95": {
         "name": "LOADED(NZ)_AIR MAX 95 neon (men's)",
         "url": "https://loadednz.com/products/air-max-95-big-bubble-neon-1",
         "api_url": "https://loadednz.com/products/air-max-95-big-bubble-neon-1.js",
+        "target_sizes": [
+            "10",
+            "10.5",
+            "11",
+            "11.5",
+            "12",
+            "12.5",
+            "13",
+        ],
         "color": 65280,
     },
 }
@@ -138,13 +224,17 @@ def send_healthcheck(state: dict) -> None:
 
 
 def check_shopify_product(product_key: str) -> list[str]:
+    product = PRODUCTS[product_key]
+    target_sizes = product["target_sizes"]
+
     data = requests.get(
-        PRODUCTS[product_key]["api_url"],
+        product["api_url"],
         headers=HEADERS,
         timeout=20,
     ).json()
 
     found = []
+
     for variant in data.get("variants", []):
         size = (
             variant.get("title", "")
@@ -152,7 +242,7 @@ def check_shopify_product(product_key: str) -> list[str]:
             .strip()
         )
 
-        if size in TARGET_SIZES and variant.get("available"):
+        if size in target_sizes and variant.get("available"):
             found.append(size)
 
     return found
